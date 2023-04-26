@@ -1,14 +1,14 @@
 var express = require("express");
 var router = express.Router();
-const { redisClient } = require('../controller/redis_con');
+const { redisClient, redisClientSub } = require('../controller/redis_con');
 const { queryData, InsertData } = require("../controller/cassandra_con.js");
-const kafka = require("kafka-node");
+// const kafka = require("kafka-node");
 const zeroPad = require("../utils/zeroPad");
-const {
-  producer1,
-  producer2,
-  producer3,
-} = require("../controller/kafka_coon.js");
+// const {
+//   producer1,
+//   producer2,
+//   producer3,
+// } = require("../controller/kafka_coon.js");
 /* GET home page. */
 router.get("/", function (req, res, next) {
   console.log("/我被调用了");
@@ -765,9 +765,14 @@ router.post("/optimizer_status", async function (req, res, next) {
     if (database == "Redis") {
       //保存数据到redis
       console.log("保存数据到redis");
+      let mes = {
+        hash_name: 'optimizer_status',
+        key: macAddress
+      }
+      let messName = JSON.stringify(mes);
       redisClient.hmset("optimizer_status", macAddress, JSON.stringify(message), (error, values) => {
         //发布频道
-        redisClient.publish("optimizer_status_updates", "optimizer_status");
+        redisClientSub.publish("optimizer_status_updates", messName);
         let log_data = "成功向power_status_updates插入一条数据";
         res.status(200).json({
           code: 200,
